@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Repaso de Hardware · 1.º ASIR</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#ecf4f3;color:#142d31;font:1.05rem/1.5 system-ui,sans-serif}
+main{max-width:49rem;margin:auto;padding:clamp(1rem,5vw,3rem)}
+header p{color:#205953;margin:0;font-weight:650}
+h1{font-size:clamp(2rem,6vw,3.1rem);line-height:1.1;margin:.35em 0 .5em}
+form,.actions{display:flex;gap:.65rem;flex-wrap:wrap;align-items:end}
+label{display:grid;gap:.3rem;max-width:100%;font-size:.95rem;font-weight:650}
+select,button{font:inherit;border:1px solid #387065;border-radius:.55rem;padding:.6rem .8rem;max-width:100%}
+button{background:#115b50;color:white;cursor:pointer;font-weight:650}
+.secondary,select{background:white;color:#153d36}
+button:focus-visible,select:focus-visible{outline:3px solid #ac570d;outline-offset:3px}
+article{background:white;border:1px solid #b8d5cf;border-radius:1rem;padding:clamp(1rem,4vw,2rem);margin-top:1.4rem}
+progress{width:100%;accent-color:#115b50}
+#topic{color:#205953;font-weight:650}
+#question:focus,#answer:focus{outline:2px solid #387065;outline-offset:4px}
+#answer{background:#e5f4ef;border-radius:.5rem;padding:.8rem 1rem;font-weight:650}
+[hidden]{display:none!important}
+</style>
+<main>
+<header><p>Fundamentos de Hardware · 1.º ASIR · RA1</p>
+<h1>Repaso con tarjetas</h1></header>
+<p>Responde en voz alta, comprueba la solución y marca si has acertado.</p>
+<form id="settings">
+<label>Tema<select id="filter"><option value="">Todos los temas</option></select></label>
+<label>Tarjetas<select id="limit"><option>10</option><option>20</option><option value="all">Todas</option></select></label>
+<button>Empezar ronda</button>
+</form>
+<article aria-label="Tarjetas de repaso">
+<div id="status"></div><progress id="progress" aria-label="Tarjetas respondidas"></progress>
+<p id="topic"></p><h2 id="question" tabindex="-1"></h2>
+<p id="answer" tabindex="-1" hidden></p>
+<button id="reveal">Mostrar respuesta</button>
+<div class="actions" id="grading" hidden><button id="correct">He acertado</button><button class="secondary" id="incorrect">Necesito repasar</button></div>
+<button id="retry" hidden>Repetir las que fallé</button>
+</article>
+</main>
+<script>
+const bank = [["Sistema informático y normas del taller", "¿Qué es el hardware?", "Los componentes físicos."], ["Sistema informático y normas del taller", "¿Qué es el software?", "Los programas."], ["Sistema informático y normas del taller", "¿Qué es el firmware?", "El software integrado en un dispositivo."], ["Sistema informático y normas del taller", "¿Qué es un editor de texto?", "Software de aplicación."], ["Sistema informático y normas del taller", "¿Qué dato distingue dos equipos del mismo modelo?", "El número de serie."], ["Sistema informático y normas del taller", "¿Para qué sirve un inventario?", "Para registrar el equipo disponible."], ["Sistema informático y normas del taller", "¿Qué haces antes de extraer la RAM?", "Apagar y desenchufar el equipo."], ["Sistema informático y normas del taller", "¿Qué significa ESD?", "Descarga electrostática."], ["Sistema informático y normas del taller", "¿Por dónde se sujeta un módulo de RAM?", "Por los bordes."], ["Sistema informático y normas del taller", "¿Qué usas para evitar descargas al manipular componentes?", "Una pulsera antiestática."], ["Representación de la información y electrónica básica", "¿Qué valores puede tomar un bit?", "0 o 1."], ["Representación de la información y electrónica básica", "¿Cuántos bits tiene un byte?", "8 bits."], ["Representación de la información y electrónica básica", "¿Cuántos bits hay en 3 bytes?", "24 bits."], ["Representación de la información y electrónica básica", "¿Cuál es la base del sistema binario?", "Base 2."], ["Representación de la información y electrónica básica", "¿Cuál es la base del sistema hexadecimal?", "Base 16."], ["Representación de la información y electrónica básica", "¿Cuántos bits representa un dígito hexadecimal?", "4 bits."], ["Representación de la información y electrónica básica", "¿Cuánto vale A hexadecimal en decimal?", "10."], ["Representación de la información y electrónica básica", "¿Cuánto vale 101101₂ en decimal?", "45."], ["Representación de la información y electrónica básica", "¿Cómo se escribe 3A₁₆ en binario?", "0011 1010."], ["Representación de la información y electrónica básica", "¿Cuántos valores distintos permiten 8 bits?", "256."], ["Representación de la información y electrónica básica", "¿Qué limita la corriente de un LED?", "Una resistencia en serie."], ["Representación de la información y electrónica básica", "¿Qué componente almacena carga eléctrica?", "El condensador."], ["Representación de la información y electrónica básica", "¿Qué componente funciona como interruptor en CMOS?", "El transistor MOSFET."], ["Arquitectura general y modelo de Von Neumann", "¿Qué bloque ejecuta las instrucciones?", "La CPU."], ["Arquitectura general y modelo de Von Neumann", "¿Qué comparten datos e instrucciones en Von Neumann?", "La memoria principal."], ["Arquitectura general y modelo de Von Neumann", "¿Qué periférico introduce las pulsaciones?", "El teclado."], ["Arquitectura general y modelo de Von Neumann", "¿Qué periférico muestra la imagen?", "El monitor."], ["Arquitectura general y modelo de Von Neumann", "¿Dónde se carga normalmente un programa para ejecutarse?", "En la RAM."], ["Arquitectura general y modelo de Von Neumann", "¿Dónde se conserva un archivo guardado al apagar?", "En el almacenamiento."], ["Arquitectura general y modelo de Von Neumann", "¿Qué significa que una memoria sea volátil?", "Pierde su contenido sin alimentación."], ["Arquitectura general y modelo de Von Neumann", "¿Qué tipo de almacenamiento es un SSD?", "No volátil."], ["Arquitectura general y modelo de Von Neumann", "¿Qué recurso limita el flujo en Von Neumann?", "El camino compartido hacia la memoria."], ["Arquitectura general y modelo de Von Neumann", "¿Qué función realiza una tarjeta de red?", "Entrada y salida de datos."], ["CPU y jerarquía de memoria", "¿Qué bloque decodifica las instrucciones?", "La unidad de control."], ["CPU y jerarquía de memoria", "¿Qué significa ALU?", "Unidad aritmético-lógica."], ["CPU y jerarquía de memoria", "¿Qué bloque realiza una suma entera?", "La ALU."], ["CPU y jerarquía de memoria", "¿Dónde guarda la CPU los operandos de una suma entre registros?", "En los registros."], ["CPU y jerarquía de memoria", "Si R3 ← R1 + R2, ¿dónde queda la suma?", "En R3."], ["CPU y jerarquía de memoria", "¿Qué indica el contador de programa?", "La dirección de la próxima instrucción."], ["CPU y jerarquía de memoria", "¿Qué operación copia un dato de RAM a un registro?", "Una carga."], ["CPU y jerarquía de memoria", "¿Qué operación copia un dato de un registro a RAM?", "Un almacenamiento."], ["CPU y jerarquía de memoria", "¿Qué suele ser más rápido, un registro o la RAM?", "Un registro."], ["CPU y jerarquía de memoria", "¿Qué nivel de caché suele ser el más rápido?", "L1."], ["CPU y jerarquía de memoria", "¿Qué es un acierto en caché?", "Encontrar el dato en caché."], ["CPU y jerarquía de memoria", "¿Para qué sirve la caché de la CPU?", "Para reducir accesos a RAM."], ["Puesta en marcha del equipo", "¿Qué firmware inicializa un PC moderno?", "UEFI."], ["Puesta en marcha del equipo", "¿Qué comprobación inicial realiza el firmware?", "El POST."], ["Puesta en marcha del equipo", "¿Qué comprueba el POST?", "El hardware básico."], ["Puesta en marcha del equipo", "¿Qué señal solicita activar las salidas principales de la fuente ATX?", "PS_ON#."], ["Puesta en marcha del equipo", "¿Qué señal indica que las salidas principales son válidas?", "PWR_OK."], ["Puesta en marcha del equipo", "¿Qué ajuste determina qué entrada de arranque se prueba primero?", "El orden de arranque."], ["Puesta en marcha del equipo", "¿Qué ejecuta UEFI tras seleccionar una entrada con cargador?", "El cargador de arranque."], ["Puesta en marcha del equipo", "¿Qué inicia el cargador de arranque?", "El kernel."], ["Puesta en marcha del equipo", "¿Qué es el kernel?", "El núcleo del sistema operativo."], ["Puesta en marcha del equipo", "¿Qué permite al sistema operativo manejar un dispositivo?", "Su controlador."], ["Puesta en marcha del equipo", "Si el arranque manual funciona y el automático falla, ¿qué revisas primero?", "El orden de arranque."], ["Puesta en marcha del equipo", "Si el LED DRAM indica un fallo de inicialización, ¿qué revisas primero?", "La colocación de la RAM."], ["Buses y conexiones", "¿Qué transporta el bus de datos?", "Datos e instrucciones."], ["Buses y conexiones", "¿Qué indica el bus de direcciones?", "La posición o el recurso seleccionado."], ["Buses y conexiones", "¿Qué bus indica si se lee o se escribe?", "El bus de control."], ["Buses y conexiones", "¿Qué es un conector?", "La pieza física de conexión."], ["Buses y conexiones", "¿Qué describe USB Tipo C?", "El tipo de conector."], ["Buses y conexiones", "¿Qué interfaz usa habitualmente una gráfica dedicada?", "PCIe."], ["Buses y conexiones", "¿Qué significa PCIe x4?", "Cuatro carriles."], ["Buses y conexiones", "¿Qué dos cables requiere un SSD SATA de 2,5 pulgadas?", "Datos y alimentación."], ["Buses y conexiones", "¿Qué gestiona las transferencias USB?", "El controlador USB."], ["Buses y conexiones", "¿Qué dimensiones indica M.2 2280?", "22 × 80 mm."], ["Buses y conexiones", "¿Qué interfaz usa un SSD NVMe interno en un PC?", "PCIe."], ["Placa base y compatibilidad", "¿Qué indica microATX?", "El formato de la placa."], ["Placa base y compatibilidad", "¿Cómo se llama el alojamiento de la CPU?", "Socket."], ["Placa base y compatibilidad", "¿Basta con que dos CPU tengan el mismo socket?", "No."], ["Placa base y compatibilidad", "¿Dónde se comprueba si la placa admite una CPU?", "En la lista de CPU compatibles."], ["Placa base y compatibilidad", "¿Qué versión debe comprobarse al cambiar la CPU?", "La de UEFI."], ["Placa base y compatibilidad", "¿Qué regula la tensión de la CPU?", "El VRM."], ["Placa base y compatibilidad", "¿Qué amplía la conectividad de la placa?", "El chipset."], ["Placa base y compatibilidad", "¿Qué conector principal alimenta una placa ATX?", "ATX de 24 pines."], ["Placa base y compatibilidad", "¿Qué conector de 8 pines alimenta el circuito de la CPU?", "EPS12V."], ["Placa base y compatibilidad", "¿Dónde se conecta el pulsador de encendido?", "En PWR_SW."], ["Placa base y compatibilidad", "Si M.2 deshabilita SATA_2, ¿dónde conectas el disco SATA?", "En un puerto SATA activo."], ["Procesadores y elección", "¿Qué designa x86-64?", "Una arquitectura de instrucciones de 64 bits."], ["Procesadores y elección", "¿Qué es un núcleo de CPU?", "Una unidad física de ejecución."], ["Procesadores y elección", "¿Cuántos hilos admite una CPU de 6 núcleos con 2 hilos por núcleo?", "12 hilos."], ["Procesadores y elección", "¿Qué mide la frecuencia de la CPU?", "Ciclos por segundo."], ["Procesadores y elección", "¿Qué significa IPC?", "Instrucciones por ciclo."], ["Procesadores y elección", "¿Qué es la frecuencia turbo?", "Una frecuencia superior a la base bajo ciertas condiciones."], ["Procesadores y elección", "¿Se mantiene siempre el turbo máximo?", "No."], ["Procesadores y elección", "¿En qué unidad se expresa el TDP?", "En vatios."], ["Procesadores y elección", "¿Para qué sirve el TDP al montar un equipo?", "Para orientar la elección de refrigeración."], ["Procesadores y elección", "¿Qué comparas al elegir una CPU para renderizar?", "El rendimiento sostenido en el programa."], ["Memoria RAM y configuración", "¿Puede instalarse DDR4 en una ranura DDR5?", "No."], ["Memoria RAM y configuración", "¿Qué formato de RAM es habitual en portátiles ampliables?", "SO-DIMM."], ["Memoria RAM y configuración", "¿Cuánta RAM suman dos módulos de 16 GB?", "32 GB."], ["Memoria RAM y configuración", "¿Qué unidad expresa la tasa de transferencia de RAM?", "MT/s."], ["Memoria RAM y configuración", "¿Qué tasa nominal indica DDR5-4800?", "4800 MT/s."], ["Memoria RAM y configuración", "¿Qué expresa el valor CL?", "La latencia CAS en ciclos."], ["Memoria RAM y configuración", "A igual tasa, ¿qué tiene menor latencia CAS, CL16 o CL18?", "CL16."], ["Memoria RAM y configuración", "¿Qué significa dual channel?", "Dos canales de memoria activos."], ["Memoria RAM y configuración", "¿Qué aumenta con dos canales a igual tasa por canal?", "El ancho de banda teórico."], ["Memoria RAM y configuración", "Si el manual recomienda A2 y B2, ¿qué ranuras ocupas?", "A2 y B2."], ["Memoria RAM y configuración", "Si falta memoria y el equipo pagina continuamente, ¿qué amplías?", "La capacidad de RAM."]];
+const ui = Object.fromEntries([...document.querySelectorAll('[id]')].map(el => [el.id, el]));
+for (const topic of new Set(bank.map(card => card[0]))) ui.filter.add(new Option(topic,topic));
+
+let round, missed, index;
+function start(cards, count, focus = true) {
+  round = [...cards];
+  for (let position = round.length - 1; position > 0; position--) {
+    const other = Math.floor(Math.random() * (position + 1));
+    [round[position], round[other]] = [round[other], round[position]];
+  }
+  round = round.slice(0, count);
+  index = 0;
+  missed = [];
+  render(focus);
+}
+function render(focus) {
+  const card = round[index];
+  ui.progress.max = round.length;
+  ui.progress.value = index;
+  ui.status.textContent = card ? `Tarjeta ${index + 1} de ${round.length}` : `Aciertos: ${round.length - missed.length} de ${round.length}`;
+  ui.topic.textContent = card ? card[0] : '';
+  ui.question.textContent = card ? card[1] : 'Ronda completada';
+  ui.answer.hidden = true;
+  ui.answer.textContent = '';
+  ui.grading.hidden = true;
+  ui.reveal.hidden = !card;
+  ui.retry.hidden = Boolean(card) || missed.length === 0;
+  if (focus) ui.question.focus();
+}
+ui.settings.addEventListener('submit', event => {
+  event.preventDefault();
+  const cards = bank.filter(card => !ui.filter.value || card[0] === ui.filter.value);
+  start(cards, ui.limit.value === 'all' ? cards.length : Number(ui.limit.value));
+});
+ui.reveal.onclick = () => {
+  ui.answer.textContent = 'Respuesta: ' + round[index][2];
+  ui.answer.hidden = false;
+  ui.reveal.hidden = true;
+  ui.grading.hidden = false;
+  ui.answer.focus();
+};
+ui.correct.onclick = () => {
+  index++;
+  render(true);
+};
+ui.incorrect.onclick = () => {
+  missed.push(round[index]);
+  index++;
+  render(true);
+};
+ui.retry.onclick = () => start(missed, missed.length);
+start(bank, 10, false);
+</script>
+</html>
